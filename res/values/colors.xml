@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="debit">#b51703</color>
+    <color name="credit">#049103</color>
+    <color name="dark_gray">#dce0ea</color>
+    <color name="light_gray">#e8ebf2</color>
+</resources>
