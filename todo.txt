@@ -1,0 +1,3 @@
+
+Fix URI for ReceiptList CursorLoader
+Fix Date insertion into database in ReceiptDbAdapter

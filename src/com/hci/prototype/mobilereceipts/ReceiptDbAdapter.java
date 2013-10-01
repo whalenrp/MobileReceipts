@@ -1,11 +1,15 @@
 package com.hci.prototype.mobilereceipts;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import java.text.DateFormat;
 import android.util.Log;
 
 public class ReceiptDbAdapter {
@@ -14,6 +18,12 @@ public class ReceiptDbAdapter {
     public static final String KEY_AMOUNT = "amount";
     public static final String KEY_FILENAME = "filename";
     public static final String KEY_CATEGORY = "category";
+    public static final String KEY_TIME = "timestamp";
+    public static final String DATABASE_TABLE = "receipts";
+    public static final String DATE_FORMAT = "MM/dd/yyyh:mm:ss a";
+    
+    private static final int DATABASE_VERSION = 1;
+    private static final String DATABASE_NAME = "data";
 
     private static final String TAG = "ReceiptDbAdapter";
     private DatabaseHelper mDbHelper;
@@ -23,13 +33,12 @@ public class ReceiptDbAdapter {
      * Database creation sql statement
      */
     private static final String DATABASE_CREATE =
-        "create table receipts (" + KEY_ROWID + " integer primary key autoincrement, "
+        "create table "+DATABASE_TABLE+" (" + KEY_ROWID + " integer primary key autoincrement, "
         + KEY_TITLE + " text not null, "+ KEY_AMOUNT + " integer, " +
-        KEY_FILENAME + " text not null, " + KEY_CATEGORY + " text);";
+        KEY_FILENAME + " text not null, " + KEY_CATEGORY + " text, " + 
+        KEY_TIME + " text not null);";
 
-    private static final String DATABASE_NAME = "data";
-    private static final String DATABASE_TABLE = "receipts";
-    private static final int DATABASE_VERSION = 1;
+    
 
     private final Context mCtx;
 
@@ -89,12 +98,18 @@ public class ReceiptDbAdapter {
      * 
      * @param title the title of the note
      * @param body the body of the note
+     * @param time the receipt was taken
      * @return rowId or -1 if failed
      */
-    public long createNote(String title, String filename) {
+    public long createReceipt(String title, String filename) {
         ContentValues initialValues = new ContentValues();
         initialValues.put(KEY_TITLE, title);
         initialValues.put(KEY_FILENAME, filename);
+        
+        Date curDate = new Date();
+        DateFormat df = SimpleDateFormat.getDateInstance();
+        initialValues.put(KEY_TIME, df.format(curDate));
+        
 
         return mDb.insert(DATABASE_TABLE, null, initialValues);
     }
@@ -117,7 +132,7 @@ public class ReceiptDbAdapter {
     public Cursor fetchAllNotes() {
 
         return mDb.query(DATABASE_TABLE, new String[] {KEY_ROWID, KEY_TITLE,
-                KEY_AMOUNT, KEY_FILENAME,KEY_CATEGORY}, null, null, null, null, null);
+                KEY_AMOUNT, KEY_FILENAME,KEY_CATEGORY, KEY_TIME}, null, null, null, null, null);
     }
 
     /**
@@ -132,7 +147,7 @@ public class ReceiptDbAdapter {
         Cursor mCursor =
 
             mDb.query(true, DATABASE_TABLE, new String[] {KEY_ROWID, KEY_TITLE,
-                    KEY_AMOUNT, KEY_FILENAME,KEY_CATEGORY}, KEY_ROWID + "=" + rowId, null,
+                    KEY_AMOUNT, KEY_FILENAME,KEY_CATEGORY, KEY_TIME}, KEY_ROWID + "=" + rowId, null,
                     null, null, null, null);
         if (mCursor != null) {
             mCursor.moveToFirst();

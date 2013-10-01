@@ -4,5 +4,6 @@
     <string name="app_name">MobileReceipts</string>
     <string name="action_settings">Settings</string>
     <string name="add_receipt">Add Receipt</string>
+    <string name="temp_filename">New Unlabeled Receipt</string>
 
 </resources>
