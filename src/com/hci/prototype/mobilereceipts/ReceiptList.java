@@ -42,35 +42,36 @@ public class ReceiptList extends ListActivity {
 		mDb = new ReceiptDbAdapter(getApplicationContext());
 		setListAdapter(new ReceiptListAdapter(getApplicationContext(), null));
 		mDb.open();
+		
+		// Asyncronously updates the UI thread's list entries
 		new AsyncCursor().execute();
 	}
+	
+	/*
+	 * Retrieve the most recently stored temporary filename for use in updating 
+	 * our database.
+	 */
 	@Override
 	protected void onResume(){
 		super.onResume();
 		mPrefs = getPreferences(Context.MODE_PRIVATE);
 		tempFile = mPrefs.getString("tempFile", null);
-		Log.e("ReceiptList","Retrieving tempFile as : " + tempFile);
+		Log.i("ReceiptList","Retrieving tempFile as : " + tempFile);
 	}
+	
+	/*
+	 * Store the most recently used temporary filename for use in updating 
+	 * our database when we receive a callback.
+	 */
 	@Override
 	protected void onPause(){
 		super.onPause();
-		Log.e("ReceiptList","Storing tempFile as : " + tempFile);
+		Log.i("ReceiptList","Storing tempFile as : " + tempFile);
 		SharedPreferences.Editor edit = mPrefs.edit();
 		edit.putString("tempFile", tempFile);
 		edit.commit();
 	}
 	
-	@Override
-	protected void onStart(){
-		super.onStart();
-		//mDb.open();
-	}
-	
-	@Override
-	protected void onStop(){
-		super.onStop();
-		//mDb.close();
-	}
 	@Override
 	protected void onDestroy(){
 		super.onDestroy();
@@ -101,10 +102,14 @@ public class ReceiptList extends ListActivity {
 					FileDatabaseController controller = new FileDatabaseController();
 					File outFile = controller.createImageFile();
 					
+					// This adds the new file created by the FileDatabaseController to the intent to 
+					// take a picture, letting the camera know where to save the image.
 					Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 					takePictureIntent.putExtra("filename", outFile.getAbsolutePath());
 					takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(outFile));
 					
+					// Store the temporary filename so that we can properly add a reference to 
+					// it in our database when the camera returns with a success.
 					tempFile = outFile.getAbsolutePath();
 				    startActivityForResult(takePictureIntent,ACTION_CAMERA_CAPTURE);
 				}
@@ -118,8 +123,8 @@ public class ReceiptList extends ListActivity {
 	
 	/*
 	 * This method will trigger when this activity receives a callback from the camera application 
-	 * with a resulting image stored in the intent bundle. The intent was configured to store the 
-	 * image in the 
+	 * with a resulting image stored in the intent bundle. The intent is configured to store the 
+	 * image in a temporary file retrieved from FileDatabaseController
 	 */
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent intent){
@@ -144,7 +149,7 @@ public class ReceiptList extends ListActivity {
 	
 	/*
 	 * This inner class will be responsible for updating individual list entries
-	 * from XML files. It performs some list-optimization for better scrolling.
+	 * from XML files.
 	 */
 	class ReceiptListAdapter extends SimpleCursorAdapter {
 		
@@ -192,10 +197,19 @@ public class ReceiptList extends ListActivity {
 		
 	}
 
+	/*
+	 * Helper function used to trigger an update to the UI thread's
+	 * list of receipt entries.
+	 */
 	private void resetCursor(Cursor c){
 		((ReceiptListAdapter)getListAdapter()).changeCursor(c);
 	}
 	
+	/*
+	 * This class is responsible for asyncronously retrieving a cursor to the receipts 
+	 * database. Once it receives a new cursor, it will update the UI thread's list with
+	 * the new data.
+	 */
 	private class AsyncCursor extends AsyncTask<Void,Void,Cursor>{
 
 		@Override

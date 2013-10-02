@@ -10,6 +10,10 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.util.Log;
 
+/*
+ * This class contains utility functions for working with the file field
+ * from the database.
+ */
 public class FileDatabaseController {
 
 	private static String JPEG_FILE_PREFIX = "receipt_";

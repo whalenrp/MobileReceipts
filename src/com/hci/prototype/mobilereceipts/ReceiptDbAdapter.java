@@ -12,6 +12,11 @@ import android.database.sqlite.SQLiteOpenHelper;
 import java.text.DateFormat;
 import android.util.Log;
 
+/*
+ * This class serves as a wrapper around our database. Each row represents
+ * a receipt object that has been taken. If the amount is 0.0, our receipt
+ * has not been updated, but an image file has been cached for it.
+ */
 public class ReceiptDbAdapter {
     public static final String KEY_ROWID = "_id";
     public static final String KEY_TITLE = "title";
