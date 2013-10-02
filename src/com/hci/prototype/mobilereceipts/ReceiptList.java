@@ -5,12 +5,14 @@ import java.io.File;
 import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -27,6 +29,7 @@ public class ReceiptList extends ListActivity {
 	private static final int ACTION_CAMERA_CAPTURE = 1337;
 	private String tempFile;
 	private ReceiptDbAdapter mDb;
+	private SharedPreferences mPrefs;
 
 
 	
@@ -35,19 +38,42 @@ public class ReceiptList extends ListActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_receipt_list);
 				
+		mPrefs = getPreferences(Context.MODE_PRIVATE);
 		mDb = new ReceiptDbAdapter(getApplicationContext());
 		setListAdapter(new ReceiptListAdapter(getApplicationContext(), null));
+		mDb.open();
+		new AsyncCursor().execute();
 	}
-	
 	@Override
 	protected void onResume(){
 		super.onResume();
-		mDb.open();
+		mPrefs = getPreferences(Context.MODE_PRIVATE);
+		tempFile = mPrefs.getString("tempFile", null);
+		Log.e("ReceiptList","Retrieving tempFile as : " + tempFile);
 	}
-	
 	@Override
 	protected void onPause(){
 		super.onPause();
+		Log.e("ReceiptList","Storing tempFile as : " + tempFile);
+		SharedPreferences.Editor edit = mPrefs.edit();
+		edit.putString("tempFile", tempFile);
+		edit.commit();
+	}
+	
+	@Override
+	protected void onStart(){
+		super.onStart();
+		//mDb.open();
+	}
+	
+	@Override
+	protected void onStop(){
+		super.onStop();
+		//mDb.close();
+	}
+	@Override
+	protected void onDestroy(){
+		super.onDestroy();
 		mDb.close();
 	}
 
@@ -72,7 +98,7 @@ public class ReceiptList extends ListActivity {
 			case R.id.receipt_add:
 				
 				if (Util.isIntentAvailable(MyApplication.getAppContext(), MediaStore.ACTION_IMAGE_CAPTURE)){
-					DatabaseController controller = new DatabaseController();
+					FileDatabaseController controller = new FileDatabaseController();
 					File outFile = controller.createImageFile();
 					
 					Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -104,6 +130,10 @@ public class ReceiptList extends ListActivity {
 			if (resultCode != RESULT_CANCELED){
 				// This should be run in a background thread.
 				Resources resources = getApplicationContext().getResources();
+				mPrefs = getPreferences(Context.MODE_PRIVATE);
+				tempFile = mPrefs.getString("tempFile", null);
+				Log.e("ReceiptList","Tempfile : " + tempFile);
+				
 				mDb.createReceipt(resources.getString(R.string.temp_filename), tempFile);
 				new AsyncCursor().execute();
 			}else{
@@ -117,8 +147,6 @@ public class ReceiptList extends ListActivity {
 	 * from XML files. It performs some list-optimization for better scrolling.
 	 */
 	class ReceiptListAdapter extends SimpleCursorAdapter {
-		private final String[] viewFrom = new String[]{ReceiptDbAdapter.KEY_TITLE, ReceiptDbAdapter.KEY_AMOUNT};
-		private final int[] viewTo={R.id.label,R.id.cost};
 		
 		ReceiptListAdapter(Context ctxt, Cursor cursor) {
 			super(ctxt, R.layout.row, cursor, 
@@ -132,18 +160,18 @@ public class ReceiptList extends ListActivity {
 			
 			// Set all the fields in the given view to their corresponding
 			// cursor values
-			for (int i =0; i < viewFrom.length; ++i){
-				TextView field = (TextView)row.findViewById(viewTo[i]);
-				int cursorIndex = cursor.getColumnIndex(viewFrom[i]);
-				field.setText(cursor.getString(cursorIndex));
-			}
-			
-			// Now perform some customization of the views. 
-			// 1) Set cost colors to indicated credit or debit
-			// 2) Set row colors for visual separation.
-			final TextView size=(TextView)row.findViewById(R.id.label);
+			final TextView label=(TextView)row.findViewById(R.id.label);
 			final TextView cost=(TextView)row.findViewById(R.id.cost);
 			
+			// Set the row's label text
+			int labelIndex = cursor.getColumnIndex(ReceiptDbAdapter.KEY_TITLE);
+			label.setText(cursor.getString(labelIndex));
+			
+			// Set the row's total cost
+			int costIndex = cursor.getColumnIndex(ReceiptDbAdapter.KEY_AMOUNT);
+			cost.setText(String.valueOf(cursor.getDouble(costIndex)));
+
+			// Stylize each row and give the cost different colors for different amounts
 			Resources resources = getApplicationContext().getResources();
 			if (Double.parseDouble(cost.getText().toString()) < 0.0) {
 				cost.setTextColor(resources.getColor(R.color.debit));
@@ -151,12 +179,15 @@ public class ReceiptList extends ListActivity {
 			else {
 				cost.setTextColor(resources.getColor(R.color.credit));
 			}
-			
 			if (cursor.getPosition() % 2 == 0)
 				row.setBackgroundColor(resources.getColor(R.color.dark_gray));
 			else
 				row.setBackgroundColor(resources.getColor(R.color.light_gray));
 			
+			// Store the database key for this particular entry in the view's tag field 
+			// for easy lookup later
+			int idIndex = cursor.getColumnIndex(ReceiptDbAdapter.KEY_ROWID);
+			row.setTag(cursor.getInt(idIndex));
 		}
 		
 	}
@@ -174,7 +205,9 @@ public class ReceiptList extends ListActivity {
 		
 		@Override
 		protected void onPostExecute(Cursor cursor){
-			resetCursor(cursor);
+			synchronized(getListAdapter()){
+				resetCursor(cursor);
+			}
 		}
 	}
 

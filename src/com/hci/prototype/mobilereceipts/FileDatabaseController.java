@@ -10,7 +10,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.util.Log;
 
-public class DatabaseController {
+public class FileDatabaseController {
 
 	private static String JPEG_FILE_PREFIX = "receipt_";
 	private static final String JPEG_FILE_SUFFIX=".jpg";

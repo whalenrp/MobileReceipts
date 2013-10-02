@@ -20,7 +20,6 @@ public class ReceiptDbAdapter {
     public static final String KEY_CATEGORY = "category";
     public static final String KEY_TIME = "timestamp";
     public static final String DATABASE_TABLE = "receipts";
-    public static final String DATE_FORMAT = "MM/dd/yyyh:mm:ss a";
     
     private static final int DATABASE_VERSION = 1;
     private static final String DATABASE_NAME = "data";
@@ -34,7 +33,7 @@ public class ReceiptDbAdapter {
      */
     private static final String DATABASE_CREATE =
         "create table "+DATABASE_TABLE+" (" + KEY_ROWID + " integer primary key autoincrement, "
-        + KEY_TITLE + " text not null, "+ KEY_AMOUNT + " integer, " +
+        + KEY_TITLE + " text not null, "+ KEY_AMOUNT + " text, " +
         KEY_FILENAME + " text not null, " + KEY_CATEGORY + " text, " + 
         KEY_TIME + " text not null);";
 
@@ -105,6 +104,7 @@ public class ReceiptDbAdapter {
         ContentValues initialValues = new ContentValues();
         initialValues.put(KEY_TITLE, title);
         initialValues.put(KEY_FILENAME, filename);
+        initialValues.put(KEY_AMOUNT, "0.0");
         
         Date curDate = new Date();
         DateFormat df = SimpleDateFormat.getDateInstance();

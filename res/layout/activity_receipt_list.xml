@@ -17,7 +17,7 @@
      <TextView android:id="@android:id/empty"
                android:layout_width="match_parent"
                android:layout_height="match_parent"
-               android:text="No data"/>
+               android:text="Tap the camera above to add a receipt"/>
 
 
 </LinearLayout>
