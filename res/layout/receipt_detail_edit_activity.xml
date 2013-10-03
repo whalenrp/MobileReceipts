@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" >
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+
+        <com.hci.prototype.mobilereceipts.AspectRatioImage
+            android:id="@+id/receiptImage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:layout_gravity="center_horizontal"
+            android:layout_margin="8dp"
+            android:contentDescription="Receipt Image">
+        </com.hci.prototype.mobilereceipts.AspectRatioImage>
+
+        <LinearLayout
+            android:id="@+id/row1"
+            android:layout_below="@id/receiptImage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.05"
+                android:paddingLeft="10sp"
+                android:text="Title" />
+
+            <EditText
+                android:id="@+id/receiptTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.42"
+                android:inputType="text" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/row2"
+            android:layout_below="@id/row1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+
+            <TextView
+                android:layout_width="72dp"
+                android:layout_height="wrap_content"
+                android:paddingLeft="10sp"
+                android:text="Amount" />
+
+            <EditText
+                android:id="@+id/receiptTotal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.42"
+                android:inputType="numberSigned|numberDecimal" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/row3"
+            android:layout_below="@id/row2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+
+            <TextView
+                android:layout_width="72dp"
+                android:layout_height="wrap_content"
+                android:paddingLeft="10sp"
+                android:text="Category" />
+
+            <Spinner
+                android:id="@+id/receiptCategory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.42" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/row4"
+            android:layout_below="@id/row3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+			android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="10sp"
+                android:text="Date Paid" />
+
+            <DatePicker
+                android:id="@+id/receiptDate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <Button
+            android:layout_below="@id/row4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="onSubmit"
+            android:text="Save" />
+    </RelativeLayout>
+
+</ScrollView>

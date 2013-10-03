@@ -1,13 +1,18 @@
 package com.hci.prototype.mobilereceipts;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.util.Log;
 
 /*
@@ -50,6 +55,18 @@ public class FileDatabaseController {
 		}
 	    //mCurrentPhotoPath = image.getAbsolutePath();
 	    return image;
+	}
+	
+	public static Bitmap getBitmapFromFile(String filepath){
+		InputStream in = null;
+		try {
+			File tempFile = new File(filepath);
+			Log.e("FileDatabaseController","Filelength : " + tempFile.length());
+			in = new FileInputStream(filepath);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		return BitmapFactory.decodeStream(in);
 	}
 
 }

@@ -1,6 +1,8 @@
 package com.hci.prototype.mobilereceipts;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 import android.app.ListActivity;
 import android.content.Context;
@@ -8,7 +10,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
-import android.net.Uri;
+import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -16,6 +18,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 /*
@@ -43,7 +46,7 @@ public class ReceiptList extends ListActivity {
 		setListAdapter(new ReceiptListAdapter(getApplicationContext(), null));
 		mDb.open();
 		
-		// Asyncronously updates the UI thread's list entries
+		// Asynchronously updates the UI thread's list entries
 		new AsyncCursor().execute();
 	}
 	
@@ -105,8 +108,8 @@ public class ReceiptList extends ListActivity {
 					// This adds the new file created by the FileDatabaseController to the intent to 
 					// take a picture, letting the camera know where to save the image.
 					Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-					takePictureIntent.putExtra("filename", outFile.getAbsolutePath());
-					takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(outFile));
+					//takePictureIntent.putExtra("filename", outFile.getAbsolutePath());
+					//takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(outFile));
 					
 					// Store the temporary filename so that we can properly add a reference to 
 					// it in our database when the camera returns with a success.
@@ -133,10 +136,25 @@ public class ReceiptList extends ListActivity {
 			// Create an entry in the database with the filepath used to 
 			// store the image
 			if (resultCode != RESULT_CANCELED){
+				
+
 				// This should be run in a background thread.
 				Resources resources = getApplicationContext().getResources();
 				mPrefs = getPreferences(Context.MODE_PRIVATE);
 				tempFile = mPrefs.getString("tempFile", null);
+				
+				Bundle extras = intent.getExtras();
+			    Bitmap mImageBitmap = (Bitmap) extras.get("data");
+			    try {
+					FileOutputStream fos = new FileOutputStream(tempFile);
+					mImageBitmap.compress(Bitmap.CompressFormat.PNG, 90, fos);
+					fos.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			    
+			    
 				Log.e("ReceiptList","Tempfile : " + tempFile);
 				
 				mDb.createReceipt(resources.getString(R.string.temp_filename), tempFile);
@@ -145,6 +163,40 @@ public class ReceiptList extends ListActivity {
 				// Image capture cancelled. Don't add an entry to the database.
 			}
 		}
+	}
+	
+	/*
+	 * This method will fire an intent for the ReceiptDetailEditActivity that contains the
+	 * database values for the given row. 
+	 * Each row has hidden fields that contain the database values for that row. These fields
+	 * will be added to the intent before it is sent to minimize time spend querying the database.
+	 */
+	@Override
+	protected void onListItemClick (ListView l, View row, int position, long id){
+		final TextView label=(TextView)row.findViewById(R.id.label);
+		final TextView cost=(TextView)row.findViewById(R.id.cost);
+		final TextView category=(TextView)row.findViewById(R.id.category);
+		final TextView date=(TextView)row.findViewById(R.id.date);
+		final TextView filename=(TextView)row.findViewById(R.id.filename);
+		final TextView key_id =(TextView)row.findViewById(R.id.key_id);
+		
+		Intent i = new Intent(this, ReceiptDetailEditActivity.class);
+		i.putExtra("key_id", key_id.getText().toString());
+		i.putExtra("label", label.getText().toString());
+		i.putExtra("cost", cost.getText().toString());
+		i.putExtra("category", category.getText().toString());
+		i.putExtra("date", date.getText().toString());
+		i.putExtra("filename", filename.getText().toString());
+		startActivity(i);
+		
+	}
+	
+	/*
+	 * Helper function used to trigger an update to the UI thread's
+	 * list of receipt entries.
+	 */
+	private void resetCursor(Cursor c){
+		((ReceiptListAdapter)getListAdapter()).changeCursor(c);
 	}
 	
 	/*
@@ -168,6 +220,7 @@ public class ReceiptList extends ListActivity {
 			final TextView label=(TextView)row.findViewById(R.id.label);
 			final TextView cost=(TextView)row.findViewById(R.id.cost);
 			
+			
 			// Set the row's label text
 			int labelIndex = cursor.getColumnIndex(ReceiptDbAdapter.KEY_TITLE);
 			label.setText(cursor.getString(labelIndex));
@@ -189,22 +242,27 @@ public class ReceiptList extends ListActivity {
 			else
 				row.setBackgroundColor(resources.getColor(R.color.light_gray));
 			
-			// Store the database key for this particular entry in the view's tag field 
+			// Store the database fields for this particular entry in the view's tag field 
 			// for easy lookup later
-			int idIndex = cursor.getColumnIndex(ReceiptDbAdapter.KEY_ROWID);
-			row.setTag(cursor.getInt(idIndex));
+			final TextView category=(TextView)row.findViewById(R.id.category);
+			final TextView date=(TextView)row.findViewById(R.id.date);
+			final TextView filename=(TextView)row.findViewById(R.id.filename);
+			final TextView id =(TextView)row.findViewById(R.id.key_id);
+			
+			final int categoryIndex = cursor.getColumnIndex(ReceiptDbAdapter.KEY_CATEGORY);
+			final int dateIndex = cursor.getColumnIndex(ReceiptDbAdapter.KEY_TIME);
+			final int filenameIndex = cursor.getColumnIndex(ReceiptDbAdapter.KEY_FILENAME);
+			final int idIndex = cursor.getColumnIndex(ReceiptDbAdapter.KEY_ROWID);
+			
+			category.setText(cursor.getString(categoryIndex));
+			date.setText(cursor.getString(dateIndex));
+			filename.setText(cursor.getString(filenameIndex));
+			id.setText(cursor.getString(idIndex).toString());
 		}
 		
 	}
 
-	/*
-	 * Helper function used to trigger an update to the UI thread's
-	 * list of receipt entries.
-	 */
-	private void resetCursor(Cursor c){
-		((ReceiptListAdapter)getListAdapter()).changeCursor(c);
-	}
-	
+
 	/*
 	 * This class is responsible for asyncronously retrieving a cursor to the receipts 
 	 * database. Once it receives a new cursor, it will update the UI thread's list with
