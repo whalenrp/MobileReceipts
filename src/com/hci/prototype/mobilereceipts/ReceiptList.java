@@ -45,9 +45,6 @@ public class ReceiptList extends ListActivity {
 		mDb = new ReceiptDbAdapter(getApplicationContext());
 		setListAdapter(new ReceiptListAdapter(getApplicationContext(), null));
 		mDb.open();
-		
-		// Asynchronously updates the UI thread's list entries
-		new AsyncCursor().execute();
 	}
 	
 	/*
@@ -60,6 +57,9 @@ public class ReceiptList extends ListActivity {
 		mPrefs = getPreferences(Context.MODE_PRIVATE);
 		tempFile = mPrefs.getString("tempFile", null);
 		Log.i("ReceiptList","Retrieving tempFile as : " + tempFile);
+		
+		// Asynchronously updates the UI thread's list entries
+		new AsyncCursor().execute();
 	}
 	
 	/*
