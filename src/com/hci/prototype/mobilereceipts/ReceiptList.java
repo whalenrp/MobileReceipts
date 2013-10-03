@@ -147,7 +147,7 @@ public class ReceiptList extends ListActivity {
 			    Bitmap mImageBitmap = (Bitmap) extras.get("data");
 			    try {
 					FileOutputStream fos = new FileOutputStream(tempFile);
-					mImageBitmap.compress(Bitmap.CompressFormat.PNG, 90, fos);
+					mImageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
 					fos.close();
 				} catch (IOException e) {
 					// TODO Auto-generated catch block

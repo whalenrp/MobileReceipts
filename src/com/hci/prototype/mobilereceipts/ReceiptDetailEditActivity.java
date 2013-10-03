@@ -1,8 +1,12 @@
 package com.hci.prototype.mobilereceipts;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import android.app.Activity;
+import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -14,7 +18,6 @@ import android.widget.EditText;
 import android.widget.Spinner;
 
 public class ReceiptDetailEditActivity extends Activity {
-	
 	
 	private int key_id;
 	private AspectRatioImage receiptImg;
@@ -65,8 +68,18 @@ public class ReceiptDetailEditActivity extends Activity {
 	 * and return to the main activity.
 	 */
 	public void onSubmit(View v){
+		int   day  = receiptDate.getDayOfMonth();
+		int   month= receiptDate.getMonth();
+		int   year = receiptDate.getYear();
+
+		SimpleDateFormat sdf = new SimpleDateFormat(ReceiptDbAdapter.DATE_FORMAT);
+		String formattedDate = sdf.format(new Date(year, month, day));
 		// Send data to AsyncCursor
-		
+		ContentValues cv = new ContentValues();
+		cv.put(ReceiptDbAdapter.KEY_TITLE, receiptTitle.getText().toString());
+		cv.put(ReceiptDbAdapter.KEY_AMOUNT, receiptCost.getText().toString());
+		cv.put(ReceiptDbAdapter.KEY_TIME, formattedDate);
+		new AsyncCursor(this, key_id).execute(cv);
 		finish();
 	}
 	
@@ -75,18 +88,25 @@ public class ReceiptDetailEditActivity extends Activity {
 	 * database. Once it receives a new cursor, it will update the UI thread's list with
 	 * the new data.
 	 */
-	private class AsyncCursor extends AsyncTask<Integer,Void,Cursor>{
+	private class AsyncCursor extends AsyncTask<ContentValues,Void,Void>{
 
 		private ReceiptDbAdapter mDb;
-		
-		@Override
-		protected Cursor doInBackground(Integer... arg0) {
-			return mDb.fetchAllNotes();
+		private long rowId;
+		public AsyncCursor(Context ctxt, long id){
+			mDb = new ReceiptDbAdapter(ctxt);
+			rowId = id;
+			mDb.open();
 		}
 		
 		@Override
-		protected void onPostExecute(Cursor cursor){
-			
+		protected Void doInBackground(ContentValues... arg0) {
+			mDb.updateReceipt(rowId, arg0[0]);
+			return null;
+		}
+		
+		@Override
+		protected void onPostExecute(Void nothing){
+			mDb.close();
 		}
 	}
 

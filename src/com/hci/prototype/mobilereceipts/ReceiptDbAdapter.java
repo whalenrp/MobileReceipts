@@ -1,5 +1,6 @@
 package com.hci.prototype.mobilereceipts;
 
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -9,7 +10,6 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import java.text.DateFormat;
 import android.util.Log;
 
 /*
@@ -25,6 +25,7 @@ public class ReceiptDbAdapter {
     public static final String KEY_CATEGORY = "category";
     public static final String KEY_TIME = "timestamp";
     public static final String DATABASE_TABLE = "receipts";
+    public static final String DATE_FORMAT = "dd-MM-yyyy";
     
     private static final int DATABASE_VERSION = 1;
     private static final String DATABASE_NAME = "data";
@@ -112,7 +113,8 @@ public class ReceiptDbAdapter {
         initialValues.put(KEY_AMOUNT, "0.0");
         
         Date curDate = new Date();
-        DateFormat df = SimpleDateFormat.getDateInstance();
+        //DateFormat df = SimpleDateFormat.getDateInstance();
+        DateFormat df = new SimpleDateFormat(DATE_FORMAT);
         initialValues.put(KEY_TIME, df.format(curDate));
         
 
@@ -137,7 +139,7 @@ public class ReceiptDbAdapter {
     public Cursor fetchAllNotes() {
 
         return mDb.query(DATABASE_TABLE, new String[] {KEY_ROWID, KEY_TITLE,
-                KEY_AMOUNT, KEY_FILENAME,KEY_CATEGORY, KEY_TIME}, null, null, null, null, null);
+                KEY_AMOUNT, KEY_FILENAME,KEY_CATEGORY, KEY_TIME}, null, null, null, null, KEY_TIME + " DESC");
     }
 
     /**
