@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="nav">
+        <item >Sort</item>
+        <item >Budget</item>
+        <item >Unfinished Receipts</item>
+    </string-array>
+    
+</resources>

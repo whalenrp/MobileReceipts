@@ -80,7 +80,6 @@ public class ReceiptDetailEditActivity extends Activity {
 		cv.put(ReceiptDbAdapter.KEY_AMOUNT, receiptCost.getText().toString());
 		cv.put(ReceiptDbAdapter.KEY_TIME, formattedDate);
 		new AsyncCursor(this, key_id).execute(cv);
-		finish();
 	}
 	
 	/*
@@ -107,6 +106,7 @@ public class ReceiptDetailEditActivity extends Activity {
 		@Override
 		protected void onPostExecute(Void nothing){
 			mDb.close();
+			finish();
 		}
 	}
 

@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import android.app.ListActivity;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -14,27 +14,36 @@ import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
+
+
+
 /*
  * This class will be the main entry point of the application. It will 
  * house a list of all color-coded transations as well as buttons in the
  * top corners to access the camera to log more receipts, and a side-menu
  * to give extended options
  */
-public class ReceiptList extends ListActivity {
+public class ReceiptList extends Activity implements AdapterView.OnItemClickListener{
 	
 	private static final int ACTION_CAMERA_CAPTURE = 1337;
 	private String tempFile;
 	private ReceiptDbAdapter mDb;
 	private SharedPreferences mPrefs;
-
-
+	 
+	private String[] mPlanetTitles;
+    private DrawerLayout mDrawerLayout;
+    private ListView mDrawerList;
+    private ListView mReceiptList;
 	
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
@@ -42,12 +51,22 @@ public class ReceiptList extends ListActivity {
 		setContentView(R.layout.activity_receipt_list);
 				
 		mPrefs = getPreferences(Context.MODE_PRIVATE);
+		
+		mReceiptList = (ListView)findViewById(R.id.list);
 		mDb = new ReceiptDbAdapter(getApplicationContext());
-		setListAdapter(new ReceiptListAdapter(getApplicationContext(), null));
+		mReceiptList.setAdapter(new ReceiptListAdapter(getApplicationContext(), null));
+		mReceiptList.setOnItemClickListener(this);
 		mDb.open();
 		
-		// Asynchronously updates the UI thread's list entries
-		new AsyncCursor().execute();
+		mPlanetTitles = getResources().getStringArray(R.array.nav);
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawerList = (ListView) findViewById(R.id.left_drawer);
+
+        // Set the adapter for the list view
+        mDrawerList.setAdapter(new ArrayAdapter<String>(this,
+                R.layout.drawer_list_item, mPlanetTitles));
+        // Set the list's click listener
+       // mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
 	}
 	
 	/*
@@ -60,6 +79,9 @@ public class ReceiptList extends ListActivity {
 		mPrefs = getPreferences(Context.MODE_PRIVATE);
 		tempFile = mPrefs.getString("tempFile", null);
 		Log.i("ReceiptList","Retrieving tempFile as : " + tempFile);
+		
+		// Asynchronously updates the UI thread's list entries
+		new AsyncCursor().execute();
 	}
 	
 	/*
@@ -147,7 +169,7 @@ public class ReceiptList extends ListActivity {
 			    Bitmap mImageBitmap = (Bitmap) extras.get("data");
 			    try {
 					FileOutputStream fos = new FileOutputStream(tempFile);
-					mImageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+					mImageBitmap.compress(Bitmap.CompressFormat.PNG, 90, fos);
 					fos.close();
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
@@ -165,38 +187,13 @@ public class ReceiptList extends ListActivity {
 		}
 	}
 	
-	/*
-	 * This method will fire an intent for the ReceiptDetailEditActivity that contains the
-	 * database values for the given row. 
-	 * Each row has hidden fields that contain the database values for that row. These fields
-	 * will be added to the intent before it is sent to minimize time spend querying the database.
-	 */
-	@Override
-	protected void onListItemClick (ListView l, View row, int position, long id){
-		final TextView label=(TextView)row.findViewById(R.id.label);
-		final TextView cost=(TextView)row.findViewById(R.id.cost);
-		final TextView category=(TextView)row.findViewById(R.id.category);
-		final TextView date=(TextView)row.findViewById(R.id.date);
-		final TextView filename=(TextView)row.findViewById(R.id.filename);
-		final TextView key_id =(TextView)row.findViewById(R.id.key_id);
-		
-		Intent i = new Intent(this, ReceiptDetailEditActivity.class);
-		i.putExtra("key_id", key_id.getText().toString());
-		i.putExtra("label", label.getText().toString());
-		i.putExtra("cost", cost.getText().toString());
-		i.putExtra("category", category.getText().toString());
-		i.putExtra("date", date.getText().toString());
-		i.putExtra("filename", filename.getText().toString());
-		startActivity(i);
-		
-	}
 	
 	/*
 	 * Helper function used to trigger an update to the UI thread's
 	 * list of receipt entries.
 	 */
 	private void resetCursor(Cursor c){
-		((ReceiptListAdapter)getListAdapter()).changeCursor(c);
+		((ReceiptListAdapter)mReceiptList.getAdapter()).changeCursor(c);
 	}
 	
 	/*
@@ -277,10 +274,37 @@ public class ReceiptList extends ListActivity {
 		
 		@Override
 		protected void onPostExecute(Cursor cursor){
-			synchronized(getListAdapter()){
+			synchronized(mReceiptList){
 				resetCursor(cursor);
 			}
 		}
+	}
+
+
+	/*
+	 * This method will fire an intent for the ReceiptDetailEditActivity that contains the
+	 * database values for the given row. 
+	 * Each row has hidden fields that contain the database values for that row. These fields
+	 * will be added to the intent before it is sent to minimize time spend querying the database.
+	 */
+	@Override
+	public void onItemClick(AdapterView<?> arg0, View row, int arg2, long arg3) {
+		// TODO Auto-generated method stub
+		final TextView label=(TextView)row.findViewById(R.id.label);
+		final TextView cost=(TextView)row.findViewById(R.id.cost);
+		final TextView category=(TextView)row.findViewById(R.id.category);
+		final TextView date=(TextView)row.findViewById(R.id.date);
+		final TextView filename=(TextView)row.findViewById(R.id.filename);
+		final TextView key_id =(TextView)row.findViewById(R.id.key_id);
+		
+		Intent i = new Intent(this, ReceiptDetailEditActivity.class);
+		i.putExtra("key_id", key_id.getText().toString());
+		i.putExtra("label", label.getText().toString());
+		i.putExtra("cost", cost.getText().toString());
+		i.putExtra("category", category.getText().toString());
+		i.putExtra("date", date.getText().toString());
+		i.putExtra("filename", filename.getText().toString());
+		startActivity(i);
 	}
 
 }
