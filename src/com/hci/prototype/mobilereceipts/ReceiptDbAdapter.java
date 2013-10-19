@@ -23,6 +23,7 @@ public class ReceiptDbAdapter {
     public static final String KEY_AMOUNT = "amount";
     public static final String KEY_FILENAME = "filename";
     public static final String KEY_CATEGORY = "category";
+    public static final String KEY_TYPE = "type";
     public static final String KEY_TIME = "timestamp";
     public static final String DATABASE_TABLE = "receipts";
     public static final String DATE_FORMAT = "dd-MM-yyyy";
@@ -40,7 +41,7 @@ public class ReceiptDbAdapter {
     private static final String DATABASE_CREATE =
         "create table "+DATABASE_TABLE+" (" + KEY_ROWID + " integer primary key autoincrement, "
         + KEY_TITLE + " text not null, "+ KEY_AMOUNT + " text, " +
-        KEY_FILENAME + " text not null, " + KEY_CATEGORY + " text, " + 
+        KEY_FILENAME + " text not null, " + KEY_CATEGORY + " text, " + KEY_TYPE + " text, " +
         KEY_TIME + " text not null);";
 
     
@@ -111,6 +112,8 @@ public class ReceiptDbAdapter {
         initialValues.put(KEY_TITLE, title);
         initialValues.put(KEY_FILENAME, filename);
         initialValues.put(KEY_AMOUNT, "0.0");
+        initialValues.put(KEY_CATEGORY, "Payments");
+        initialValues.put(KEY_TYPE, "Casual");
         
         Date curDate = new Date();
         //DateFormat df = SimpleDateFormat.getDateInstance();
@@ -136,10 +139,51 @@ public class ReceiptDbAdapter {
      * 
      * @return Cursor over all notes
      */
-    public Cursor fetchAllNotes() {
+    public Cursor fetchAllNotes(String... args) {
+    	String order = null;
+    	String filter = null;
+    	
+    	if(args[0] == "Amount"){
+    		order = "CAST(" + args[0] + " AS REAL)";
+    	} else{
+    		order = "LOWER(" + args[0] + ")";
+    	}
+    	
+    	if(args[1] == "No Filter" && args[2] == "All"){
+    		filter = "";
+    	} else if(args[1] != "No Filter" && args[2] == "All"){
+    		filter = KEY_CATEGORY + "='" + args[1] + "'";
+    	} else if(args[1] == "No Filter" && args[2] != "All"){
+    		filter = KEY_TYPE + "='" + args[2] + "'";
+    	} else {
+    		filter = KEY_CATEGORY + "='" + args[1] + "' AND " + KEY_TYPE + "='" + args[2] + "'";
+    	}
+    	
+    	return mDb.query(DATABASE_TABLE, new String[] {KEY_ROWID, KEY_TITLE,
+	               KEY_AMOUNT, KEY_FILENAME,KEY_CATEGORY, KEY_TYPE, KEY_TIME}, filter, null, null, null, order);  
 
-        return mDb.query(DATABASE_TABLE, new String[] {KEY_ROWID, KEY_TITLE,
-                KEY_AMOUNT, KEY_FILENAME,KEY_CATEGORY, KEY_TIME}, null, null, null, null, KEY_TIME + " DESC");
+    	/*if(args[0] == "Amount"){
+    		if(args[1] == "No Filter"){
+    			return mDb.query(DATABASE_TABLE, new String[] {KEY_ROWID, KEY_TITLE,
+	               KEY_AMOUNT, KEY_FILENAME,KEY_CATEGORY, KEY_TYPE, KEY_TIME}, null, null, null, null, "ABS(" + args[0] + ")");  
+    		} else {
+    			return mDb.query(DATABASE_TABLE, new String[] {KEY_ROWID, KEY_TITLE,
+    	               KEY_AMOUNT, KEY_FILENAME,KEY_CATEGORY, KEY_TYPE, KEY_TIME}, KEY_CATEGORY + "='" + args[1] + "'", null, null, null, "ABS(" + args[0] + ")");
+    		}
+    	} else{
+    		if(args[1] == "No Filter"){
+    			return mDb.query(DATABASE_TABLE, new String[] {KEY_ROWID, KEY_TITLE,
+	                KEY_AMOUNT, KEY_FILENAME,KEY_CATEGORY, KEY_TYPE, KEY_TIME}, null, null, null, null, "LOWER(" + args[0] + ")");
+    		} else {
+    			return mDb.query(DATABASE_TABLE, new String[] {KEY_ROWID, KEY_TITLE,
+    	                KEY_AMOUNT, KEY_FILENAME,KEY_CATEGORY, KEY_TYPE, KEY_TIME}, KEY_CATEGORY + "='" + args[1] + "'", null, null, null, "LOWER(" + args[0] + ")");
+    		}
+    	}
+    	/*} else{
+    		return mDb.query(DATABASE_TABLE, new String[] {KEY_ROWID, KEY_TITLE,
+	                KEY_AMOUNT, KEY_FILENAME,KEY_CATEGORY, KEY_TIME}, KEY_CATEGORY + "='payments'", null, null, null, 
+	                args[0] + " DESC");
+    	//}*/
     }
 
     /**
@@ -154,13 +198,19 @@ public class ReceiptDbAdapter {
         Cursor mCursor =
 
             mDb.query(true, DATABASE_TABLE, new String[] {KEY_ROWID, KEY_TITLE,
-                    KEY_AMOUNT, KEY_FILENAME,KEY_CATEGORY, KEY_TIME}, KEY_ROWID + "=" + rowId, null,
+                    KEY_AMOUNT, KEY_FILENAME,KEY_CATEGORY, KEY_TYPE, KEY_TIME}, KEY_ROWID + "=" + rowId, null,
                     null, null, null, null);
         if (mCursor != null) {
             mCursor.moveToFirst();
         }
         return mCursor;
 
+    }
+    
+    public Cursor sumCol() throws SQLException {
+    	Cursor mCursor = mDb.rawQuery("SELECT * FROM receipts", null);
+    
+        return mCursor;
     }
     /**
      * Update the receipt using the values provided. The note to be updated is

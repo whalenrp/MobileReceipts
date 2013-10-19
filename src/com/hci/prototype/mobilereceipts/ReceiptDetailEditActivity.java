@@ -24,6 +24,7 @@ public class ReceiptDetailEditActivity extends Activity {
 	private EditText receiptTitle;
 	private EditText receiptCost;
 	private Spinner receiptCategory;
+	private Spinner receiptType;
 	private DatePicker receiptDate;
 	
 	
@@ -36,6 +37,7 @@ public class ReceiptDetailEditActivity extends Activity {
 		receiptTitle = (EditText)findViewById(R.id.receiptTitle);
 		receiptCost = (EditText)findViewById(R.id.receiptTotal);
 		receiptCategory = (Spinner)findViewById(R.id.receiptCategory);
+		receiptType = (Spinner)findViewById(R.id.receiptType);
 		receiptDate = (DatePicker)findViewById(R.id.receiptDate);
 		
 		//mDb = new ReceiptDbAdapter(getApplicationContext());
@@ -60,6 +62,12 @@ public class ReceiptDetailEditActivity extends Activity {
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		// Apply the adapter to the spinner
 		receiptCategory.setAdapter(adapter);
+		
+		ArrayAdapter<CharSequence> busAdapter = ArrayAdapter.createFromResource(this,
+				R.array.business, android.R.layout.simple_spinner_item);
+		
+		busAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		receiptType.setAdapter(busAdapter);
 	}
 	
 	/*
@@ -79,6 +87,8 @@ public class ReceiptDetailEditActivity extends Activity {
 		cv.put(ReceiptDbAdapter.KEY_TITLE, receiptTitle.getText().toString());
 		cv.put(ReceiptDbAdapter.KEY_AMOUNT, receiptCost.getText().toString());
 		cv.put(ReceiptDbAdapter.KEY_TIME, formattedDate);
+		cv.put(ReceiptDbAdapter.KEY_CATEGORY, receiptCategory.getSelectedItem().toString());
+		cv.put(ReceiptDbAdapter.KEY_TYPE, receiptType.getSelectedItem().toString());
 		new AsyncCursor(this, key_id).execute(cv);
 	}
 	

@@ -78,9 +78,27 @@
                 android:layout_weight="0.42" />
         </LinearLayout>
 
-        <LinearLayout
+         <LinearLayout
             android:id="@+id/row4"
             android:layout_below="@id/row3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+
+            <TextView
+                android:layout_width="72dp"
+                android:layout_height="wrap_content"
+                android:paddingLeft="10sp"
+                android:text="Business/Casual" />
+
+            <Spinner
+                android:id="@+id/receiptType"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.42" />
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/row5"
+            android:layout_below="@id/row4"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
 			android:orientation="vertical">
@@ -98,7 +116,7 @@
         </LinearLayout>
 
         <Button
-            android:layout_below="@id/row4"
+            android:layout_below="@id/row5"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:onClick="onSubmit"
