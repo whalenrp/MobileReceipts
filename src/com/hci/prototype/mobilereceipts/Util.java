@@ -10,16 +10,16 @@ import android.content.pm.ResolveInfo;
 
 public final class Util {
 
-	public static String formatPrice(double price){
-		NumberFormat formatter = NumberFormat.getCurrencyInstance();
+	public static String formatPrice(final double price){
+		final NumberFormat formatter = NumberFormat.getCurrencyInstance();
 		return formatter.format(price);
 	}
-	
-	public static boolean isIntentAvailable(Context context, String action) {
-	    final PackageManager packageManager = context.getPackageManager();
-	    final Intent intent = new Intent(action);
-	    List<ResolveInfo> list =
-	            packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
-	    return list.size() > 0;
+
+	public static boolean isIntentAvailable(final Context context, final String action) {
+		final PackageManager packageManager = context.getPackageManager();
+		final Intent intent = new Intent(action);
+		final List<ResolveInfo> list =
+				packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+		return list.size() > 0;
 	}
 }

@@ -6,23 +6,23 @@ import android.widget.ImageView;
 
 public class AspectRatioImage extends ImageView {
 
-	public AspectRatioImage(Context context) {
+	public AspectRatioImage(final Context context) {
 		super(context);
 		// TODO Auto-generated constructor stub
 	}
-	public AspectRatioImage(Context context, AttributeSet attrs) {
-	    super(context, attrs);
+	public AspectRatioImage(final Context context, final AttributeSet attrs) {
+		super(context, attrs);
 	}
 
-	public AspectRatioImage(Context context, AttributeSet attrs, int defStyle) {
-	    super(context, attrs, defStyle);
+	public AspectRatioImage(final Context context, final AttributeSet attrs, final int defStyle) {
+		super(context, attrs, defStyle);
 	}
 
 	@Override
-	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-	    int width = MeasureSpec.getSize(widthMeasureSpec);
-	    int height = width * getDrawable().getIntrinsicHeight() / getDrawable().getIntrinsicWidth();
-	    setMeasuredDimension(width, height);
+	protected void onMeasure(final int widthMeasureSpec, final int heightMeasureSpec) {
+		final int width = MeasureSpec.getSize(widthMeasureSpec);
+		final int height = width * getDrawable().getIntrinsicHeight() / getDrawable().getIntrinsicWidth();
+		setMeasuredDimension(width, height);
 	}
 
 }
