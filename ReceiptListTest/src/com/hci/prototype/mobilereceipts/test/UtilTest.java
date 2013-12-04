@@ -1,18 +1,21 @@
 package com.hci.prototype.mobilereceipts.test;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import junit.framework.TestCase;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.test.InstrumentationTestCase;
 import android.test.mock.MockContext;
 import android.test.mock.MockPackageManager;
 
 import com.hci.prototype.mobilereceipts.Util;
 
-public class UtilTest extends TestCase {
+public class UtilTest extends InstrumentationTestCase {
 	
 	// Stubs for Context and PackageManager objects
 	private class MyMockContext extends MockContext{
@@ -61,5 +64,19 @@ public class UtilTest extends TestCase {
 	public void testIsIntentAvailable(){
 		MockContext ctxt = new MyMockContext();
 		assertTrue(Util.isIntentAvailable(ctxt, null));
+	}
+	
+	/*
+	 * Test the Util's OCR parsing
+	 */
+	public void testGetReceiptText() {
+		try{
+			getInstrumentation().getTargetContext().getAssets().open("eng.traineddata");
+		}catch (IOException e){
+			assertTrue(false);
+		}
+		assertTrue(true);
+		String mImagePath = "android.resource://com.hci.prototype.mobilereceipts/" + 0x7f020003;
+		String result = Util.getReceiptText(getInstrumentation().getTargetContext(), mImagePath);
 	}
 }

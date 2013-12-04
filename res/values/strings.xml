@@ -5,5 +5,31 @@
     <string name="action_settings">Settings</string>
     <string name="add_receipt">Add Receipt</string>
     <string name="temp_filename">New Unlabeled Receipt</string>
+    <string-array name="navDrawerHeader">
+        <item >Sort By</item>
+        <item >Filter By Category</item>
+        <item >Toggle Business/Casual</item>
+        <item >View Budget</item>
+        <item >Export to Server</item>
+    </string-array>
+    <string-array name="navDrawerSort">
+        <item >Date</item>
+        <item >Category</item>
+        <item >Amount</item>
+        <item >Name</item>
+    </string-array>
+    <string-array name="navDrawerFilter">
+        <item >Payments</item>
+        <item >Dining Out</item>
+        <item >Entertainment</item>
+        <item >Groceries</item>
+        <item >Misc.</item>
+        <item >No Filter</item>
+    </string-array>
+    <string-array name="navDrawerBusiness">
+        <item >Business</item>
+        <item >Casual</item>
+        <item >All</item>
+    </string-array>
 
 </resources>

@@ -47,7 +47,7 @@ public class FileDatabaseController {
 			image = File.createTempFile(
 					imageFileName,
 					JPEG_FILE_SUFFIX,
-					getAlbumDir()
+					new File(Util.DATA_PATH + "tessdata")
 					);
 		} catch (final IOException e) {
 			Log.e("DatabaseController","Could not create temporary file for image storage");

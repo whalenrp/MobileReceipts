@@ -1,7 +1,7 @@
 package com.hci.prototype.mobilereceipts;
 
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import android.content.Context;
 import android.graphics.Typeface;
@@ -16,10 +16,10 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
 	private final Context _context;
 	private final List<String> _listDataHeader; // header titles
 	// child data in format of header title, child title
-	private final HashMap<String, List<String>> _listDataChild;
+	private final Map<String, List<String>> _listDataChild;
 
 	public ExpandableListAdapter(final Context context, final List<String> listDataHeader,
-			final HashMap<String, List<String>> listChildData) {
+			final Map<String, List<String>> listChildData) {
 		_context = context;
 		_listDataHeader = listDataHeader;
 		_listDataChild = listChildData;
@@ -38,8 +38,10 @@ public class ExpandableListAdapter extends BaseExpandableListAdapter {
 
 	@Override
 	public int getChildrenCount(final int groupPosition) {
-		return _listDataChild.get(_listDataHeader.get(groupPosition))
-				.size();
+		if (_listDataChild.get(_listDataHeader.get(groupPosition)) != null)
+			return _listDataChild.get(_listDataHeader.get(groupPosition)).size();
+		else 
+			return 0;
 	}
 
 	@Override

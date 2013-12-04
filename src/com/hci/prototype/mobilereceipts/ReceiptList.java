@@ -1,23 +1,23 @@
 package com.hci.prototype.mobilereceipts;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
-import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -25,13 +25,10 @@ import android.view.View;
 import android.widget.ExpandableListView;
 import android.widget.ExpandableListView.OnChildClickListener;
 import android.widget.ExpandableListView.OnGroupClickListener;
-import android.widget.ExpandableListView.OnGroupCollapseListener;
-import android.widget.ExpandableListView.OnGroupExpandListener;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
-import android.widget.Toast;
 /*
  * This class will be the main entry point of the application. It will
  * house a list of all color-coded transations as well as buttons in the
@@ -130,23 +127,51 @@ public class ReceiptList extends ListActivity {
 		}
 
 	}
+	
+	/***************************************************
+	 * Button Listeners
+	 *************************************************/
+	
+	private class OCRDialogListener implements DialogInterface.OnClickListener{
+
+		private String ocrText;
+		
+		public OCRDialogListener(String ocrText){
+			this.ocrText = ocrText;
+		}
+		@Override
+		public void onClick(DialogInterface dialog, int which) {
+			switch(which){
+				case DialogInterface.BUTTON_POSITIVE:
+					mDb.createReceipt(ocrText.substring(0, Math.min(ocrText.length(), 20)), tempFile);
+					break;
+				case DialogInterface.BUTTON_NEGATIVE:
+					final Resources resources = getApplicationContext().getResources();
+					mDb.createReceipt(resources.getString(R.string.temp_filename), tempFile);
+					break;
+				case DialogInterface.BUTTON_NEUTRAL:
+					break;
+				default:
+					throw new UnsupportedOperationException();
+			}
+			new AsyncCursor().execute(sort, filter, type);
+		}
+		
+	}
 	private static final int ACTION_CAMERA_CAPTURE = 1337;
 	private String tempFile;
 
 	private ReceiptDbAdapter mDb;
 
 	private SharedPreferences mPrefs;
-	private DrawerLayout mDrawerLayout;
 	private ExpandableListView mDrawerList;
 
 	private List<String> navHeader;
-	private HashMap<String, List<String>> navChild;
+	private Map<String, List<String>> navChild;
+	
+	// Sort and filter options for the list data.
 	private String sort = "timestamp";
-
-
-
 	private String filter = "No Filter";
-
 	private String type = "All";
 
 	/*
@@ -162,32 +187,30 @@ public class ReceiptList extends ListActivity {
 			// store the image
 			if (resultCode != RESULT_CANCELED){
 
-
-				// This should be run in a background thread.
-				final Resources resources = getApplicationContext().getResources();
+				
 				mPrefs = getPreferences(Context.MODE_PRIVATE);
 				tempFile = mPrefs.getString("tempFile", null);
 
-				final Bundle extras = intent.getExtras();
-				final Bitmap mImageBitmap = (Bitmap) extras.get("data");
-				try {
-					final FileOutputStream fos = new FileOutputStream(tempFile);
-					mImageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
-					fos.close();
-				} catch (final IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-
-
 				Log.e("ReceiptList","Tempfile : " + tempFile);
-
-				mDb.createReceipt(resources.getString(R.string.temp_filename), tempFile);
-				new AsyncCursor().execute(sort, filter, type);
-			}else{
-				// Image capture cancelled. Don't add an entry to the database.
+				
+				String ocrParsedText = Util.getReceiptText(this, tempFile);
+				
+				Log.e("ReceiptList", ocrParsedText);
+				
+				createAndShowOCRConfirmationDialog(ocrParsedText);				
 			}
 		}
+	}
+
+	private void createAndShowOCRConfirmationDialog(String ocrParsedText) {
+		OCRDialogListener listener = new OCRDialogListener(ocrParsedText);
+		AlertDialog.Builder mAlertBuilder = new AlertDialog.Builder(this);
+		mAlertBuilder.setMessage("Would you like to use the title, '" + ocrParsedText + 
+				"' that we detected from your receipt?").
+				setNeutralButton("Cancel", listener).
+				setNegativeButton("No, thanks", listener).
+				setPositiveButton("Yes!", listener).create().show();
+		
 	}
 
 	@Override
@@ -200,7 +223,6 @@ public class ReceiptList extends ListActivity {
 		setListAdapter(new ReceiptListAdapter(getApplicationContext(), null));
 		mDb.open();
 
-		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
 		mDrawerList = (ExpandableListView) findViewById(R.id.left_drawer);
 
 		prepareListData();
@@ -208,86 +230,61 @@ public class ReceiptList extends ListActivity {
 		// Set the adapter for the list view
 		mDrawerList.setAdapter(new ExpandableListAdapter(this,
 				navHeader, navChild));
-		// Set the list's click listener
-		//mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
-
-		// Listview Group click listener
+		
+		// Navigation Drawer clickListener for main items
 		mDrawerList.setOnGroupClickListener(new OnGroupClickListener() {
-
+			
 			@Override
-			public boolean onGroupClick(final ExpandableListView parent, final View row,
-					final int groupPosition, final long id) {
-
-
-				return false;
+			public boolean onGroupClick(ExpandableListView parent, View v,
+					int groupPosition, long id) {
+				
+				
+				switch(groupPosition){
+					case 3: // View budget
+						Intent budgetIntent = new Intent(ReceiptList.this, BudgetViewActivity.class);
+						startActivity(budgetIntent);
+						break;
+					case 4: // Export to Server
+						Intent exportIntent = new Intent(ReceiptList.this, ExportService.class);
+						startService(exportIntent);
+						break;
+					default:
+						return false;
+				}
+				return true;
 			}
 		});
 
-		// Listview Group expanded listener
-		mDrawerList.setOnGroupExpandListener(new OnGroupExpandListener() {
-
-			@Override
-			public void onGroupExpand(final int groupPosition) {
-				Toast.makeText(getApplicationContext(),
-						navHeader.get(groupPosition) + " Expanded",
-						Toast.LENGTH_SHORT).show();
-			}
-		});
-
-		// Listview Group collasped listener
-		mDrawerList.setOnGroupCollapseListener(new OnGroupCollapseListener() {
-
-			@Override
-			public void onGroupCollapse(final int groupPosition) {
-				Toast.makeText(getApplicationContext(),
-						navHeader.get(groupPosition) + " Collapsed",
-						Toast.LENGTH_SHORT).show();
-
-			}
-		});
-
-		// Listview on child click listener
+		// Navigation Drawer clickListener for subitems
 		mDrawerList.setOnChildClickListener(new OnChildClickListener() {
 
 			@Override
 			public boolean onChildClick(final ExpandableListView parent, final View v,
 					final int groupPosition, final int childPosition, final long id) {
-				// TODO Auto-generated method stub
-				Toast.makeText(
-						getApplicationContext(),
-						navHeader.get(groupPosition)
-						+ " : "
-						+ navChild.get(
-								navHeader.get(groupPosition)).get(
-										childPosition), Toast.LENGTH_SHORT)
-										.show();
-				if(groupPosition == 0){
-					sort = navChild.get(navHeader.get(groupPosition)).get(childPosition);
-
-					if(sort == "Date"){
-						sort = "timestamp";
-					} else if(sort == "Name"){
-						sort = "title";
-					}
-
-					new AsyncCursor().execute(sort, filter, type);
-
-				} else if(groupPosition == 1){
-					filter = navChild.get(navHeader.get(groupPosition)).get(childPosition);
-
-					new AsyncCursor().execute(sort, filter, type);
-				} else if(groupPosition == 2){
-					type = navChild.get(navHeader.get(groupPosition)).get(childPosition);
-
-					new AsyncCursor().execute(sort, filter, type);
+				switch(groupPosition){
+					case 0: // Sort By
+						sort = navChild.get(navHeader.get(groupPosition)).get(childPosition);
+	
+						if(sort == "Date"){
+							sort = "timestamp";
+						} else if(sort == "Name"){
+							sort = "title";
+						}
+						break;
+						
+					case 1: // Filter By Category
+						filter = navChild.get(navHeader.get(groupPosition)).get(childPosition);
+						break;
+						
+					case 2: // Toggle Business/Casual
+						type = navChild.get(navHeader.get(groupPosition)).get(childPosition);
+						break;
+					
+					default:
+						throw new UnsupportedOperationException("Unsupported Navigation Drawer item selected");
 				}
-
-				if(groupPosition == 3){
-
-					final Intent i = new Intent(ReceiptList.this, BudgetViewActivity.class);
-					startActivity(i);
-				}
-				return false;
+				new AsyncCursor().execute(sort, filter, type);
+				return true;
 			}
 		});
 
@@ -354,8 +351,7 @@ public class ReceiptList extends ListActivity {
 				// This adds the new file created by the FileDatabaseController to the intent to
 				// take a picture, letting the camera know where to save the image.
 				final Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-				//takePictureIntent.putExtra("filename", outFile.getAbsolutePath());
-				//takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(outFile));
+				takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(outFile));
 
 				// Store the temporary filename so that we can properly add a reference to
 				// it in our database when the camera returns with a success.
@@ -399,43 +395,17 @@ public class ReceiptList extends ListActivity {
 	}
 
 	private void prepareListData() {
-		navHeader = new ArrayList<String>();
+		navHeader = Arrays.asList(getResources().getStringArray(R.array.navDrawerHeader));
 		navChild = new HashMap<String, List<String>>();
 
-		navHeader.add("Sort By");
-		navHeader.add("Filter By Category");
-		navHeader.add("Toggle Business/Casual");
-		navHeader.add("View Budget");
-		// navHeader.add("Export To CSV");
-		// navHeader.add("Finish Incomplete Receipts");
-
 		// Adding child data
-		final List<String> sort = new ArrayList<String>();
-		sort.add("Date");
-		sort.add("Category");
-		sort.add("Amount");
-		sort.add("Name");
-
-		final List<String> filter = new ArrayList<String>();
-		filter.add("Payments");
-		filter.add("Dining Out");
-		filter.add("Entertainment");
-		filter.add("Groceries");
-		filter.add("Misc");
-		filter.add("No Filter");
-
-		final List<String> business = new ArrayList<String>();
-		business.add("Business");
-		business.add("Casual");
-		business.add("All");
-
-		final List<String> budget = new ArrayList<String>();
-		budget.add("Begin");
+		final List<String> sort = Arrays.asList(getResources().getStringArray(R.array.navDrawerSort));
+		final List<String> filter = Arrays.asList(getResources().getStringArray(R.array.navDrawerFilter));
+		final List<String> business = Arrays.asList(getResources().getStringArray(R.array.navDrawerBusiness));
 
 		navChild.put(navHeader.get(0), sort); // Header, Child data
 		navChild.put(navHeader.get(1), filter);
 		navChild.put(navHeader.get(2), business);
-		navChild.put(navHeader.get(3), budget);
 	}
 
 

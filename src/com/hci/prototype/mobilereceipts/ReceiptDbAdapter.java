@@ -17,7 +17,7 @@ import android.util.Log;
  * a receipt object that has been taken. If the amount is 0.0, our receipt
  * has not been updated, but an image file has been cached for it.
  */
-public class ReceiptDbAdapter {
+public class ReceiptDbAdapter extends AbstractDbAdapter {
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 		DatabaseHelper(final Context context) {
 			super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -77,6 +77,8 @@ public class ReceiptDbAdapter {
 	public ReceiptDbAdapter(final Context ctx) {
 		mCtx = ctx;
 	}
+	
+	@Override
 	public void close() {
 		mDbHelper.close();
 	}
@@ -147,29 +149,12 @@ public class ReceiptDbAdapter {
 
 		return mDb.query(DATABASE_TABLE, new String[] {KEY_ROWID, KEY_TITLE,
 				KEY_AMOUNT, KEY_FILENAME,KEY_CATEGORY, KEY_TYPE, KEY_TIME}, filter, null, null, null, order);
-
-		/*if(args[0] == "Amount"){
-    		if(args[1] == "No Filter"){
-    			return mDb.query(DATABASE_TABLE, new String[] {KEY_ROWID, KEY_TITLE,
-	               KEY_AMOUNT, KEY_FILENAME,KEY_CATEGORY, KEY_TYPE, KEY_TIME}, null, null, null, null, "ABS(" + args[0] + ")");
-    		} else {
-    			return mDb.query(DATABASE_TABLE, new String[] {KEY_ROWID, KEY_TITLE,
-    	               KEY_AMOUNT, KEY_FILENAME,KEY_CATEGORY, KEY_TYPE, KEY_TIME}, KEY_CATEGORY + "='" + args[1] + "'", null, null, null, "ABS(" + args[0] + ")");
-    		}
-    	} else{
-    		if(args[1] == "No Filter"){
-    			return mDb.query(DATABASE_TABLE, new String[] {KEY_ROWID, KEY_TITLE,
-	                KEY_AMOUNT, KEY_FILENAME,KEY_CATEGORY, KEY_TYPE, KEY_TIME}, null, null, null, null, "LOWER(" + args[0] + ")");
-    		} else {
-    			return mDb.query(DATABASE_TABLE, new String[] {KEY_ROWID, KEY_TITLE,
-    	                KEY_AMOUNT, KEY_FILENAME,KEY_CATEGORY, KEY_TYPE, KEY_TIME}, KEY_CATEGORY + "='" + args[1] + "'", null, null, null, "LOWER(" + args[0] + ")");
-    		}
-    	}
-    	/*} else{
-    		return mDb.query(DATABASE_TABLE, new String[] {KEY_ROWID, KEY_TITLE,
-	                KEY_AMOUNT, KEY_FILENAME,KEY_CATEGORY, KEY_TIME}, KEY_CATEGORY + "='payments'", null, null, null,
-	                args[0] + " DESC");
-    	//}*/
+	}
+	
+	@Override
+	public Cursor query(String[] projection, String selection, String[] selectionArgs, String groupBy,
+			String having, String orderBy, String limit){
+		return mDb.query(DATABASE_TABLE, projection, selection, selectionArgs, groupBy, having, orderBy, limit);
 	}
 	/**
 	 * Return a Cursor positioned at the note that matches the given rowId
@@ -197,14 +182,12 @@ public class ReceiptDbAdapter {
 	 * instance of the database. If it cannot be created, throw an exception to
 	 * signal the failure
 	 * 
-	 * @return this (self reference, allowing this to be chained in an
-	 *         initialization call)
 	 * @throws SQLException if the database could be neither opened or created
 	 */
-	public ReceiptDbAdapter open() throws SQLException {
+	@Override
+	public void open() throws SQLException {
 		mDbHelper = new DatabaseHelper(mCtx);
 		mDb = mDbHelper.getWritableDatabase();
-		return this;
 	}
 
 	public Cursor sumCol() throws SQLException {
